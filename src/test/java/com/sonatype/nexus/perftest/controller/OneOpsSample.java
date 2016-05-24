@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.notNullValue;
 public class OneOpsSample
 {
   @Test
-  public void sample() throws Exception {
+  public void hitNexus() throws Exception {
     String oneOpsApiToken = System.getenv("ONEOPS_API_TOKEN");
     assertThat(oneOpsApiToken, is(notNullValue()));
 
@@ -62,4 +62,32 @@ public class OneOpsSample
       pool.releaseAll();
     }
   }
+
+  @Test
+  public void stopAllAgents() throws Exception {
+    String oneOpsApiToken = System.getenv("ONEOPS_API_TOKEN");
+    assertThat(oneOpsApiToken, is(notNullValue()));
+
+    OneOpsClient oneOps = OneOpsClient.builder()
+        .baseUrl("https://oneops.prod.walmart.com")
+        .apiToken(oneOpsApiToken)
+        .build();
+
+    List<String> agentIPs = oneOps.computeIps("platform", "TestDevtoolsNexus", "PerfTest", "Java", "compute");
+
+    AgentPool pool = new AgentPool(agentIPs.stream()
+        .map(ip -> jmxServiceURL(ip + ":5000"))
+        .collect(Collectors.toList())
+    );
+
+    try {
+      Collection<Agent> m01Agents = pool.acquire(1);
+      m01Agents.parallelStream().forEach(Agent::stop);
+    }
+    finally {
+      pool.releaseAll();
+    }
+  }
+
+
 }
