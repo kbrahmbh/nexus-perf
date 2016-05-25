@@ -54,6 +54,7 @@ public class OneOpsSample
 
       Map<String, String> overrides = new HashMap<>();
       overrides.put("nexus.baseurl", "http://" + nexusIp + ":8081/nexus");
+      overrides.put("test.duration", "2 MINUTES");
 
       m01Agents.parallelStream().forEach(client -> client.start("/app/all/releases/1.0.3/maven01-1.0.3", overrides));
       m01Agents.parallelStream().forEach(Agent::waitToFinish);
