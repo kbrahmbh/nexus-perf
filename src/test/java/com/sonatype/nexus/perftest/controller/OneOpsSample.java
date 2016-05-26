@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.sonatype.nexus.perftest.controller.GaugeTrigger.State;
+
 import com.oneops.client.OneOpsClient;
 import org.junit.Test;
 
@@ -37,16 +39,25 @@ public class OneOpsSample
     );
 
     Nexus nexus = new Nexus(jmxServiceURL(nexusIp + ":1099"));
-    nexus.addTrigger(new ThresholdTrigger<>(
+    nexus.addTrigger(new GaugeTrigger<>(
             Nexus.QueuedThreadPool.activeThreads,
-            (trigger, activeThreads) -> {
-              System.out.println();
-              System.out.println(
-                  "!!!!!!!!!!!!!!!!! Nexus is dead (" + activeThreads + ") !!!!!!!!!!!!!!!!!"
-              );
-              System.out.println();
-              //pool.releaseAll();
-            }).setThreshold(395)
+            (state, activeThreads) -> {
+              if (State.HIGH == state) {
+                System.out.println();
+                System.out.println(
+                    "!!!!!!!!!!!!!!!!! Nexus is dead (" + activeThreads + ") !!!!!!!!!!!!!!!!!"
+                );
+                System.out.println();
+                //pool.releaseAll();
+              }
+              else {
+                System.out.println();
+                System.out.println(
+                    "!!!!!!!!!!!!!!!!! Nexus is alive (" + activeThreads + ") !!!!!!!!!!!!!!!!!"
+                );
+                System.out.println();
+              }
+            }).setHighThreshold(200)
     );
 
     try {
@@ -82,7 +93,7 @@ public class OneOpsSample
     );
 
     try {
-      Collection<Agent> m01Agents = pool.acquire(1);
+      Collection<Agent> m01Agents = pool.acquireAll();
       m01Agents.parallelStream().forEach(Agent::stop);
     }
     finally {
