@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.sonatype.nexus.perftest.controller.GaugeTrigger.State;
+import com.sonatype.nexus.perftest.controller.Nexus.QueuedThreadPool;
 
 import com.oneops.client.OneOpsClient;
 import org.junit.Test;
@@ -40,35 +40,32 @@ public class OneOpsSample
 
     Nexus nexus = new Nexus(jmxServiceURL(nexusIp + ":1099"));
     nexus.addTrigger(new GaugeTrigger<>(
-            Nexus.QueuedThreadPool.activeThreads,
-            (state, activeThreads) -> {
-              if (State.HIGH == state) {
-                System.out.println();
-                System.out.println(
-                    "!!!!!!!!!!!!!!!!! Nexus is dead (" + activeThreads + ") !!!!!!!!!!!!!!!!!"
-                );
-                System.out.println();
-                //pool.releaseAll();
-              }
-              else {
-                System.out.println();
-                System.out.println(
-                    "!!!!!!!!!!!!!!!!! Nexus is alive (" + activeThreads + ") !!!!!!!!!!!!!!!!!"
-                );
-                System.out.println();
-              }
-            }).setHighThreshold(200)
+            QueuedThreadPool.percentIdle,
+            (state, percentIdle) -> {
+              System.out.println();
+              System.out.println(
+                  "!!!!!!!!!!!!!!!!! Percent idle (" + state + " - " + percentIdle + ") !!!!!!!!!!!!!!!!!"
+              );
+              System.out.println();
+              //pool.releaseAll();
+            }).setLowThreshold(0.5)
     );
 
     try {
-      Collection<Agent> m01Agents = pool.acquire(1);
+      Collection<Agent> m01Agents = pool.acquire(100);
 
       Map<String, String> overrides = new HashMap<>();
       overrides.put("nexus.baseurl", "http://" + nexusIp + ":8081/nexus");
-      overrides.put("test.duration", "2 MINUTES");
+      overrides.put("test.duration", "5 MINUTES");
 
       m01Agents.parallelStream().forEach(client -> client.start("/app/all/releases/1.0.3/maven01-1.0.3", overrides));
+      List<Swarm> m01Swarms = m01Agents.stream().map(Agent::getSwarms).flatMap(Collection::stream).collect(Collectors.toList());
+      m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
+        control.setRateMultiplier(5);
+        control.setRateSleepMillis(7);
+      });
       m01Agents.parallelStream().forEach(Agent::waitToFinish);
+
     }
     finally {
       pool.releaseAll();
