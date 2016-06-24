@@ -64,10 +64,19 @@ public class OneOpsSample
 
       m01Agents.parallelStream().forEach(client -> {
         try {
-          client.start("/app/all/releases/1.0.3/npm01-1.0.3", overrides);
+          client.load("/app/all/releases/1.0.3/npm01-1.0.3", overrides);
         }
         catch (Exception e) {
-          log.error("Problem",e);
+          log.error("Problem", e);
+        }
+      });
+
+      m01Agents.parallelStream().forEach(client -> {
+        try {
+          client.start();
+        }
+        catch (Exception e) {
+          log.error("Problem", e);
         }
       });
 
