@@ -56,11 +56,11 @@ public class OneOpsSample
     }));
 
     try {
-      Collection<Agent> m01Agents = pool.acquire(100);
+      Collection<Agent> m01Agents = pool.acquire(10);
 
       Map<String, String> overrides = new HashMap<>();
       overrides.put("nexus.baseurl", "http://" + nexusIp + ":8081/nexus");
-      overrides.put("test.duration", "5 MINUTES");
+      overrides.put("test.duration", "2 MINUTES");
 
       m01Agents.parallelStream().forEach(client -> {
         try {
@@ -87,6 +87,10 @@ public class OneOpsSample
       //  control.setRateSleepMillis(7);
       //});
       m01Agents.parallelStream().forEach(Agent::waitToFinish);
+      m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
+        System.out.println("--------");
+        control.getFailures().stream().forEach(failure -> System.out.println("-------- " + failure));
+      });
       m01Swarms.stream().forEach(swarm -> assertThat(swarm.get(Swarm.Failure.count), is(equalTo(0L))));
     }
     finally {
