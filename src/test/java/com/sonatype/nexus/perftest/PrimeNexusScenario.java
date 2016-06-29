@@ -4,22 +4,17 @@
  * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
  * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
  */
-package com.sonatype.nexus.perftest.tests;
+package com.sonatype.nexus.perftest;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.sonatype.nexus.perftest.ClientSwarm;
-import com.sonatype.nexus.perftest.Metric;
-import com.sonatype.nexus.perftest.Nexus;
-import com.sonatype.nexus.perftest.ProgressTickThread;
-import com.sonatype.nexus.perftest.RequestRate;
-import com.sonatype.nexus.perftest.maven.CsvLogParser;
 import com.sonatype.nexus.perftest.maven.DownloadOperation;
-import com.sonatype.nexus.perftest.maven.DownloadPaths;
-import com.sonatype.nexus.perftest.maven.HttpdLogParser;
+import com.sonatype.nexus.perftest.paths.CsvLogParser;
+import com.sonatype.nexus.perftest.paths.DownloadPaths;
+import com.sonatype.nexus.perftest.paths.HttpdLogParser;
 
-public class PrimeNexusRepoMain
+public class PrimeNexusScenario
 {
 
   public static final int DOWNLOAD_TCOUNT = 20;

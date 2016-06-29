@@ -275,6 +275,7 @@ public class ClientSwarm
             .build();
       }
     };
+    SharedMetricRegistries.remove(name);
     SharedMetricRegistries.getOrCreate(name).registerAll(metricSet);
 
     swarmName = name;
