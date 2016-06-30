@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.oneops.client.OneOpsClient;
 import org.junit.Test;
@@ -12,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sonatype.nexus.perftest.controller.JMXServiceURLs.jmxServiceURL;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -42,29 +42,30 @@ public class OneOpsSample
 
     AgentPool pool = new AgentPool(agentIPs.stream()
         .map(ip -> jmxServiceURL(ip + ":5000"))
-        .collect(Collectors.toList())
+        .collect(toList())
     );
 
     Nexus nexus = new Nexus(jmxServiceURL(nexusIp + ":1099"), username, password);
-    nexus.addTrigger(new QueuedThreadPoolUnhealthy(s -> {
+    nexus.addTrigger(new NotificationTrigger(Nexus.ObjectNames.healthCheckNotifier(), n -> {
       System.out.println();
       System.out.println(
-          "!!!!!!!!!!!!!!!!! " + s + " !!!!!!!!!!!!!!!!!"
+          "!!!!!!!!!!!!!!!!! " + n.getType() + " - " + n.getMessage() + " !!!!!!!!!!!!!!!!!"
       );
       System.out.println();
-      //pool.releaseAll();
     }));
 
     try {
-      Collection<Agent> m01Agents = pool.acquire(10);
+      Collection<Agent> m01Agents = pool.acquire(25);
 
       Map<String, String> overrides = new HashMap<>();
       overrides.put("nexus.baseurl", "http://" + nexusIp + ":8081/nexus");
+      overrides.put("nexus.username", username);
+      overrides.put("nexus.password", password);
       overrides.put("test.duration", "2 MINUTES");
 
       m01Agents.parallelStream().forEach(client -> {
         try {
-          client.load("/app/all/releases/1.0.3/npm01-1.0.3", overrides);
+          client.load("/app/all/releases/1.0.4/npm01-1.0.4", overrides);
         }
         catch (Exception e) {
           log.error("Problem", e);
@@ -80,16 +81,18 @@ public class OneOpsSample
         }
       });
 
-      List<Swarm> m01Swarms = m01Agents.stream().map(Agent::getSwarms).flatMap(Collection::stream)
-          .collect(Collectors.toList());
-      //m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
-      //  control.setRateMultiplier(5);
-      //  control.setRateSleepMillis(7);
-      //});
+      List<Swarm> m01Swarms = m01Agents.stream().map(Agent::getSwarms).flatMap(Collection::stream).collect(toList());
+      m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
+        control.setRateMultiplier(1);
+        control.setRateSleepMillis(1000);
+      });
       m01Agents.parallelStream().forEach(Agent::waitToFinish);
       m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
-        System.out.println("--------");
-        control.getFailures().stream().forEach(failure -> System.out.println("-------- " + failure));
+        List<String> failures = control.getFailures();
+        if (failures.size() > 0) {
+          System.out.println("----------");
+          failures.stream().forEach(failure -> System.out.println("  |------> " + failure));
+        }
       });
       m01Swarms.stream().forEach(swarm -> assertThat(swarm.get(Swarm.Failure.count), is(equalTo(0L))));
     }
@@ -116,7 +119,7 @@ public class OneOpsSample
 
     AgentPool pool = new AgentPool(agentIPs.stream()
         .map(ip -> jmxServiceURL(ip + ":5000"))
-        .collect(Collectors.toList())
+        .collect(toList())
     );
 
     try {
