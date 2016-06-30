@@ -55,7 +55,7 @@ public class OneOpsSample
     }));
 
     try {
-      Collection<Agent> m01Agents = pool.acquire(25);
+      Collection<Agent> m01Agents = pool.acquire(50);
 
       Map<String, String> overrides = new HashMap<>();
       overrides.put("nexus.baseurl", "http://" + nexusIp + ":8081/nexus");
