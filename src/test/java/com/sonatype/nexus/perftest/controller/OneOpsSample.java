@@ -87,13 +87,17 @@ public class OneOpsSample
         control.setRateSleepMillis(1000);
       });
       m01Agents.parallelStream().forEach(Agent::waitToFinish);
-      m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
-        List<String> failures = control.getFailures();
-        if (failures.size() > 0) {
-          System.out.println("----------");
-          failures.stream().forEach(failure -> System.out.println("  |------> " + failure));
-        }
-      });
+      //m01Swarms.parallelStream().map(Swarm::getControl).forEach(control -> {
+      //  List<String> failures = control.getFailures();
+      //  if (failures.size() > 0) {
+      //    System.out.println("----------");
+      //    failures.stream().forEach(failure -> System.out.println("  |------> " + failure));
+      //  }
+      //});
+      System.out.println("------ Requests: " + nexus.get(Nexus.Requests.count));
+      System.out.println("------ Latency: " + nexus.get(Nexus.Requests.mean));
+      System.out.println("------ OneMinuteRate: " + nexus.get(Nexus.Requests.oneMinuteRate));
+      System.out.println("------ Rejects: " + nexus.get(Nexus.QoS.Rejects.count));
       m01Swarms.stream().forEach(swarm -> assertThat(swarm.get(Swarm.Failure.count), is(equalTo(0L))));
     }
     finally {
