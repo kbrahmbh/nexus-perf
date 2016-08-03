@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
 import com.sonatype.nexus.perftest.operation.CircularIterator;
@@ -54,8 +53,13 @@ public class HttpdLogParser
         String method = st.nextToken(); // "METHOD
         if ("GET".equals(method)) {
           String path = st.nextToken(); // path
-          if (path.startsWith(prefix)) {
-            paths.add(path.substring(prefix.length()));
+          if (prefix != null) {
+            if (path.startsWith(prefix)) {
+              paths.add(path.substring(prefix.length()));
+            }
+          }
+          else {
+            paths.add(path);
           }
         }
       }
