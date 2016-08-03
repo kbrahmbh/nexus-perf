@@ -35,13 +35,13 @@ public class DownloadOperation
 
   public DownloadOperation(
       @JacksonInject Nexus nexus,
-      @JsonProperty(value = "repo", required = true) String repo,
+      @JsonProperty("repo") String repo,
       @JsonProperty(value = "context-root", defaultValue = "nexus") String contextRoot,
       @JsonProperty(value = "user-agent") String userAgent,
       @JsonProperty(value = "paths", required = true) DownloadPaths paths)
   {
     super(nexus);
-    this.baseUrl = getRepoBaseurl(repo);
+    this.baseUrl = repo == null ? getNexusUrl() : getRepoBaseurl(repo);
     this.prefix = "/" + contextRoot + "/";
     this.userAgent = userAgent;
     this.paths = paths;

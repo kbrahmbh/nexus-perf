@@ -28,12 +28,13 @@ public class DownloadOperation
 
   private final DownloadAction downloadAction;
 
-  public DownloadOperation(@JacksonInject Nexus nexus, @JsonProperty("repo") String repo,
+  public DownloadOperation(@JacksonInject Nexus nexus,
+                           @JsonProperty("repo") String repo,
                            @JsonProperty("paths") DownloadPaths paths)
   {
     super(nexus);
     this.paths = paths;
-    this.downloadAction = new DownloadAction(getRepoBaseurl(repo));
+    this.downloadAction = new DownloadAction(repo == null ? getNexusUrl() : getRepoBaseurl(repo));
   }
 
   @Override

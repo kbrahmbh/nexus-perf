@@ -93,4 +93,8 @@ public abstract class AbstractNexusOperation
   protected String getRepoBaseurl(String repoid) {
     return getNexusClient(newRepositoryFactories()).getSubsystem(Repositories.class).get(repoid).contentUri();
   }
+
+  protected String getNexusUrl() {
+    return getNexusClient(newRepositoryFactories()).getStatus().getBaseUrl();
+  }
 }
