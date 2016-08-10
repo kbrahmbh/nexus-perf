@@ -20,6 +20,7 @@ import javax.management.ObjectName;
 import javax.management.StandardEmitterMBean;
 
 import com.sonatype.nexus.perftest.PerformanceTest;
+import com.sonatype.nexus.perftest.db.PerformanceAssertionFailure;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +93,21 @@ public class PerformanceTestMBeanImpl
                     Boolean.TRUE)
                 );
 
-                performanceTest.run();
+                try {
+                  performanceTest.run();
+                } catch (PerformanceAssertionFailure e) {
+                  log.warn("PERFORMANCE FAILURE", e);
+                  sendNotification(new AttributeChangeNotification(
+                      getClass().getSimpleName(),
+                      notificationSequence++,
+                      System.currentTimeMillis(),
+                      scenario,
+                      "perfFailure",
+                      "boolean",
+                      Boolean.FALSE,
+                      Boolean.TRUE)
+                  );
+                }
               }
               finally {
                 sendNotification(new AttributeChangeNotification(

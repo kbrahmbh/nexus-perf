@@ -152,7 +152,7 @@ public class PerformanceTest
     }
 
     if (!stopped) {
-      assertPerformance(metrics, baseline);
+      assertPerformance(metrics, baseline); // throws if assertion fails: PerformanceAssertionFailure
     }
   }
 

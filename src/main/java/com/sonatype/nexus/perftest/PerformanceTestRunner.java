@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Nullable;
 
+import com.sonatype.nexus.perftest.db.PerformanceAssertionFailure;
 import com.sonatype.nexus.perftest.jmx.PerformanceTestMBeanImpl;
 
 import com.fasterxml.jackson.databind.BeanProperty;
@@ -45,9 +46,15 @@ public class PerformanceTestRunner
     else {
       // old behaviour
       PerformanceTest test = create(new File(args[0]), null);
-      test.run();
-      log.info("Exit");
-      System.exit(0);
+      try {
+        test.run();
+        log.info("Exit");
+        System.exit(0);
+      }
+      catch (PerformanceAssertionFailure e) {
+        log.warn("PERFORMANCE FAILURE", e);
+        System.exit(1);
+      }
     }
   }
 
