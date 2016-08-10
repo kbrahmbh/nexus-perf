@@ -32,4 +32,9 @@ public class Duration
   public long toMillis() {
     return unit.toMillis(value);
   }
+
+  @Override
+  public String toString() {
+    return value + " " + unit.name();
+  }
 }

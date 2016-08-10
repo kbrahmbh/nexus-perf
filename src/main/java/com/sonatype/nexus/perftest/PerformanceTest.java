@@ -93,6 +93,7 @@ public class PerformanceTest
       server.registerMBean(new ClientSwarmMBeanImpl(objectName, swarm,metricsDomain), objectName);
       objectNames.add(objectName);
     }
+    log.info("Created scenario \"{}\", duration {}", name, duration);
   }
 
   public void run() {
@@ -118,9 +119,12 @@ public class PerformanceTest
 
     boolean stopped = false;
     try {
-      stopped = !stopLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
+      stopped = stopLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
+      if (stopped) {
+        log.info("Stopped!");
+      }
 
-      log.info("Stopping...");
+      log.info("Finishing...");
       for (ClientSwarm swarm : swarms) {
         try {
           swarm.stop();
@@ -132,7 +136,7 @@ public class PerformanceTest
       progressTickThread.interrupt();
       progressTickThread.join();
       progressTickThread.printTick();
-      log.info("Stopped");
+      log.info("Finished");
     }
     catch (Exception e) {
       log.error("Error", e);
@@ -186,10 +190,12 @@ public class PerformanceTest
     }
 
     if (buildId != null && !buildId.equals("-")) {
+      log.info("Saving current run \"{}\"", buildId);
       TestExecutions.insert(execution);
     }
 
     if (baseline != null) {
+      log.info("Asserting current run \"{}\" vs baseline \"{}\"", buildId, baseline.getExecutionId());
       TestExecutions.assertPerformance(descriptors, baseline, execution);
     }
   }

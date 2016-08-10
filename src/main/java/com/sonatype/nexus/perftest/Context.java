@@ -37,9 +37,20 @@ public class Context
     try (InputStream is = new FileInputStream(perfProperties)) {
       properties.load(is);
     }
+
+    Properties cliOverrides = new Properties();
+    properties.forEach((k, v) -> {
+      String value = System.getProperty(k.toString());
+      if (value != null) {
+        cliOverrides.put(k, value);
+      }
+    });
+    cliOverrides.forEach((k, v) -> properties.setProperty(k.toString(), v.toString()));
+
     if (overrides != null) {
       overrides.forEach((k, v) -> properties.setProperty(k, v));
     }
+
     String scenario = properties.getProperty("perftest.scenario");
     this.scenarioFile = resolve(scenario);
     if (!scenarioFile.isFile()) {
