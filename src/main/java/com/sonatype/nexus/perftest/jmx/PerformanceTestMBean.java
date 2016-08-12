@@ -38,9 +38,9 @@ public interface PerformanceTestMBean
   void start();
 
   /**
-   * Stops the performance test, returns {@code true} if it was running.
+   * Aborts performance test, returns {@code true} if it was running.
    */
-  boolean stop();
+  boolean abort();
 
   /**
    * Returns {@code true} if performance test is running, {@code false} otherwise.

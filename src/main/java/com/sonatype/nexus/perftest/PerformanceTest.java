@@ -156,9 +156,7 @@ public class PerformanceTest
     }
   }
 
-  // TODO: rename to "abort" as this is actually aborting test before test ran for required duration
-  // TODO: Also, consequences are like perfstats not being saved etc
-  public void stop() {
+  public void abort() {
     stopLatch.countDown();
 
     // remove JMX and metric bits

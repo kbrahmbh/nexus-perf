@@ -103,18 +103,18 @@ public class Agent
     }
   }
 
-  public Agent stop() {
+  public Agent abort() {
     try {
-      log.info("Stopping {}", this);
+      log.info("Aborting {}", this);
       swarms.clear();
-      controlBean.stop();
+      controlBean.abort();
       if (finishSignal != null) {
         finishSignal.countDown();
       }
       return this;
     }
     catch (Exception e) {
-      log.debug("Could not stop {}: {}", this, e.toString());
+      log.debug("Could not abort {}: {}", this, e.toString());
       throw e;
     }
   }

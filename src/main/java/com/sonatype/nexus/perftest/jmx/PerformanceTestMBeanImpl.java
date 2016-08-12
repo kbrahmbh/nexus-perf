@@ -134,10 +134,10 @@ public class PerformanceTestMBeanImpl
   }
 
   @Override
-  public synchronized boolean stop() {
+  public synchronized boolean abort() {
     try {
       if (performanceTest != null) {
-        performanceTest.stop();
+        performanceTest.abort();
         performanceTest = null;
         if (performanceTestThread != null) {
           performanceTestThread.join();
@@ -180,7 +180,7 @@ public class PerformanceTestMBeanImpl
   @Override
   public void exit(final int code) {
     try {
-      stop();
+      abort();
     }
     finally {
       log.info("Exit {}", code);

@@ -93,12 +93,12 @@ public class AgentPool
                 Agent agent = toRelease.poll();
                 try {
                   log.info("Releasing {}", agent);
-                  agent.stop();
+                  agent.abort();
                   urls.offer(agent.getJmxServiceURL());
                   acquired.remove(agent);
                 }
                 catch (Exception e) {
-                  log.error("Could not stop {}", agent, e);
+                  log.error("Could not abort {}", agent, e);
                 }
               }))
               .collect(Collectors.toList())
