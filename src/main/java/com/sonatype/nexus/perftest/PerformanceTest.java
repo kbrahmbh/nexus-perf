@@ -117,14 +117,14 @@ public class PerformanceTest
 
     log.info("Started");
 
-    boolean stopped = false;
+    boolean aborted = false;
     try {
-      stopped = stopLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
-      if (stopped) {
-        log.info("Stopped!");
+      aborted = stopLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
+      if (aborted) {
+        log.info("Aborted!");
       }
 
-      log.info("Finishing...");
+      log.info("Stopping...");
       for (ClientSwarm swarm : swarms) {
         try {
           swarm.stop();
@@ -136,7 +136,7 @@ public class PerformanceTest
       progressTickThread.interrupt();
       progressTickThread.join();
       progressTickThread.printTick();
-      log.info("Finished");
+      log.info("Stopped");
     }
     catch (Exception e) {
       log.error("Error", e);
@@ -151,11 +151,13 @@ public class PerformanceTest
       }
     }
 
-    if (!stopped) {
+    if (!aborted) {
       assertPerformance(metrics, baseline); // throws if assertion fails: PerformanceAssertionFailure
     }
   }
 
+  // TODO: rename to "abort" as this is actually aborting test before test ran for required duration
+  // TODO: Also, consequences are like perfstats not being saved etc
   public void stop() {
     stopLatch.countDown();
 
