@@ -1,11 +1,11 @@
 package com.sonatype.nexus.perftest.config;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.sonatype.nexus.perftest.Nexus;
-import com.sonatype.nexus.perftest.PerformanceTest.NexusConfigurator;
-import com.sonatype.nexus.perftest.operation.AbstractNexusOperation;
 
 import org.sonatype.nexus.client.core.subsystem.repository.GroupRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.HostedRepository;
@@ -15,6 +15,7 @@ import org.sonatype.nexus.client.core.subsystem.repository.Repository;
 import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenGroupRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenHostedRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenProxyRepository;
+import org.sonatype.nexus.client.rest.BaseUrl;
 
 import com.bolyuba.nexus.plugin.npm.client.NpmGroupRepository;
 import com.bolyuba.nexus.plugin.npm.client.NpmHostedRepository;
@@ -27,12 +28,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Operation creating and optionally dropping the repository.
  */
 public class CreateRepository
-    extends AbstractNexusOperation
-    implements NexusConfigurator
+    extends AbstractNexusConfigurationOperation
 {
   // format -> type -> Class
-  // formats: hosted, proxy, group
-  // type: maven, npm
+  // formats: maven, npm
+  // types: hosted, proxy, group
   private static final Map<String, Map<String, Class<? extends Repository>>> repoTypes;
 
   static {
@@ -46,6 +46,17 @@ public class CreateRepository
     repoTypes.get("npm").put("hosted", NpmHostedRepository.class);
     repoTypes.get("npm").put("proxy", NpmProxyRepository.class);
     repoTypes.get("npm").put("group", NpmGroupRepository.class);
+  }
+
+  class NodeInfo
+  {
+    BaseUrl baseUrl;
+
+    Repositories repositories;
+
+    Repository repository;
+
+    Exception createException;
   }
 
   private final String repo;
@@ -62,11 +73,7 @@ public class CreateRepository
 
   private final boolean failIfExists;
 
-  private final Repositories repositories;
-
-  private Repository repository;
-
-  private Exception createException;
+  private final List<NodeInfo> nodeInfos;
 
   @JsonCreator
   public CreateRepository(@JacksonInject final Nexus nexus,
@@ -87,21 +94,37 @@ public class CreateRepository
     this.deleteRepository = deleteRepository;
     this.failIfExists = failIfExists;
 
-    this.repositories = getNexusClient(newRepositoryFactories()).getSubsystem(Repositories.class);
+    this.nodeInfos = getNexusClients(newRepositoryFactories())
+        .stream()
+        .map(
+            c -> {
+              NodeInfo nodeInfo = new NodeInfo();
+              nodeInfo.baseUrl = c.getConnectionInfo().getBaseUrl();
+              nodeInfo.repositories = c.getSubsystem(Repositories.class);
+              return nodeInfo;
+            }
+        )
+        .collect(Collectors.toList());
     prepare();
   }
 
-  private void prepare() throws Exception {
+  public void prepare() throws Exception {
+    for (NodeInfo nodeInfo : nodeInfos) {
+      prepare(nodeInfo);
+    }
+  }
+
+  private void prepare(final NodeInfo nodeInfo) throws Exception {
     try {
-      repository = create();
-      repository.save();
-      log.info("Created repository: {} ({}, {})", repo, format, type);
+      nodeInfo.repository = create(nodeInfo.repositories);
+      nodeInfo.repository.save();
+      log.info("Created repository ({}): {} ({}, {})", nodeInfo.baseUrl, repo, format, type);
     }
     catch (Exception e) {
       if (!failIfExists) {
-        createException = e;
-        repository = repositories.get(repo);
-        log.info("Using existing repository: {}", repo);
+        nodeInfo.createException = e;
+        nodeInfo.repository = nodeInfo.repositories.get(repo);
+        log.info("Using existing repository ({}): {}", nodeInfo.baseUrl, repo);
       }
       else {
         throw e;
@@ -111,12 +134,18 @@ public class CreateRepository
 
   @Override
   public void cleanup() throws Exception {
-    if (createException == null && deleteRepository) {
-      repository.remove().save();
+    for (NodeInfo nodeInfo : nodeInfos) {
+      cleanup(nodeInfo);
     }
   }
 
-  private Repository create() {
+  private void cleanup(final NodeInfo nodeInfo) throws Exception {
+    if (nodeInfo.createException == null && deleteRepository) {
+      nodeInfo.repository.remove().save();
+    }
+  }
+
+  private Repository create(final Repositories repositories) {
     if ("hosted".equals(type)) {
       Class<HostedRepository> repositoryClass = (Class<HostedRepository>) repoTypes.get(format).get(type);
       HostedRepository<HostedRepository> repository = repositories.create(repositoryClass, repo);

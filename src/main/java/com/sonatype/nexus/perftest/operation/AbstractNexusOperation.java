@@ -39,16 +39,13 @@ public abstract class AbstractNexusOperation
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  protected final String username;
-
-  protected final String password;
+  protected final Nexus nexus;
 
   protected final String nexusBaseurl;
 
   public AbstractNexusOperation(Nexus nexus) {
+    this.nexus = nexus;
     this.nexusBaseurl = sanitizeBaseurl(nexus.getBaseurl());
-    this.username = nexus.getUsername();
-    this.password = nexus.getPassword();
   }
 
   private static String sanitizeBaseurl(String nexusBaseurl) {
@@ -63,20 +60,24 @@ public abstract class AbstractNexusOperation
     return response.getStatusLine().getStatusCode() >= 200 && response.getStatusLine().getStatusCode() <= 299;
   }
 
-  protected NexusClient getNexusClient(final SubsystemFactory<?, JerseyNexusClient>... subsystemFactories) {
-    if (nexusBaseurl == null) {
+  protected NexusClient getNexusClientForBaseUrl(final String baseUrlString, final SubsystemFactory<?, JerseyNexusClient>... subsystemFactories) {
+    if (baseUrlString == null) {
       throw new IllegalStateException();
     }
     BaseUrl baseUrl;
     try {
-      baseUrl = BaseUrl.baseUrlFrom(this.nexusBaseurl);
+      baseUrl = BaseUrl.baseUrlFrom(sanitizeBaseurl(baseUrlString));
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
-    AuthenticationInfo authenticationInfo = new UsernamePasswordAuthenticationInfo(this.username, this.password);
+    AuthenticationInfo authenticationInfo = new UsernamePasswordAuthenticationInfo(nexus.getUsername(), nexus.getPassword());
     ConnectionInfo connectionInfo = new ConnectionInfo(baseUrl, authenticationInfo, null /* proxyInfos */);
     return new JerseyNexusClientFactory(subsystemFactories).createFor(connectionInfo);
+  }
+
+  protected NexusClient getNexusClient(final SubsystemFactory<?, JerseyNexusClient>... subsystemFactories) {
+    return getNexusClientForBaseUrl(nexusBaseurl, subsystemFactories);
   }
 
   protected JerseyRepositoriesFactory newRepositoryFactories() {

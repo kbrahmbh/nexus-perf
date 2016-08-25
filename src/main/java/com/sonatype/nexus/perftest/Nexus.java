@@ -6,12 +6,19 @@
  */
 package com.sonatype.nexus.perftest;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 public class Nexus
 {
   private final String baseurl;
+
+  private final List<String> memberurls;
 
   private final String username;
 
@@ -21,19 +28,40 @@ public class Nexus
     this.baseurl = System.getProperty("nexus.baseurl");
     this.username = System.getProperty("nexus.username");
     this.password = System.getProperty("nexus.password");
+    this.memberurls = collectMemberUrls();
   }
 
   @JsonCreator
   public Nexus(@JsonProperty("baseurl") String baseurl, @JsonProperty("username") String username,
-               @JsonProperty("password") String password)
+               @JsonProperty("password") String password, @JsonProperty("memberurls") List<String> memberurls)
   {
     this.baseurl = baseurl;
     this.username = username;
     this.password = password;
+    this.memberurls = memberurls;
+  }
+
+  private List<String> collectMemberUrls() {
+    String memberUrlsString = System.getProperty("nexus.memberurls");
+    if (memberUrlsString != null) {
+      return ImmutableList.copyOf(Splitter.on(',').omitEmptyStrings().split(memberUrlsString));
+    }
+    return null;
   }
 
   public String getBaseurl() {
     return baseurl;
+  }
+
+  public boolean isCluster() {
+    return memberurls != null && !memberurls.isEmpty();
+  }
+
+  public List<String> getMemberurls() {
+    if (memberurls != null) {
+      return memberurls;
+    }
+    return Collections.emptyList();
   }
 
   public String getUsername() {
