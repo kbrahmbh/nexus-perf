@@ -155,6 +155,9 @@ public class CreateRepository
       Class<ProxyRepository> repositoryClass = (Class<ProxyRepository>) repoTypes.get(format).get(type);
       ProxyRepository<ProxyRepository> repository = repositories.create(repositoryClass, repo);
       repository.asProxyOf(proxyOf);
+      if (MavenProxyRepository.class.isAssignableFrom(repository.getClass())) {
+        MavenProxyRepository.class.cast(repository).doNotDownloadRemoteIndexes();
+      }
       return repository;
     }
     else if ("group".equals(type)) {
