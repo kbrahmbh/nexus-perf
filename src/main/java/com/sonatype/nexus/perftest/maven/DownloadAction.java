@@ -57,6 +57,10 @@ public class DownloadAction
     this.baseUrl = baseUrl;
   }
 
+  public String getBaseUrl() {
+    return baseUrl;
+  }
+
   public long download(HttpClient httpClient, String path) throws IOException {
 
     String pref = "/nexus/";

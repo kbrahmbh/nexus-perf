@@ -40,6 +40,10 @@ public class ArtifactDeployer
     this.repoUrl = repoUrl.endsWith("/") ? repoUrl : (repoUrl + "/");
   }
 
+  public String getBaseUrl() {
+    return repoUrl;
+  }
+
   /**
    * Deploys provided pom.xml file under specified groupId, artifactId and version. The contents of the pom is updated
    * to match specified groupId, artifactId and version.
