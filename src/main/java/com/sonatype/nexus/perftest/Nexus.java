@@ -9,6 +9,8 @@ package com.sonatype.nexus.perftest;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
@@ -28,21 +30,22 @@ public class Nexus
     this.baseurl = System.getProperty("nexus.baseurl");
     this.username = System.getProperty("nexus.username");
     this.password = System.getProperty("nexus.password");
-    this.memberurls = collectMemberUrls();
+    this.memberurls = collectMemberUrls(System.getProperty("nexus.memberurls"));
   }
 
   @JsonCreator
-  public Nexus(@JsonProperty("baseurl") String baseurl, @JsonProperty("username") String username,
-               @JsonProperty("password") String password, @JsonProperty("memberurls") List<String> memberurls)
+  public Nexus(@JsonProperty("baseurl") String baseurl,
+               @JsonProperty("username") String username,
+               @JsonProperty("password") String password,
+               @JsonProperty(defaultValue = "memberurls", required = false) String memberurls)
   {
     this.baseurl = baseurl;
     this.username = username;
     this.password = password;
-    this.memberurls = memberurls;
+    this.memberurls = collectMemberUrls(memberurls);
   }
 
-  private List<String> collectMemberUrls() {
-    String memberUrlsString = System.getProperty("nexus.memberurls");
+  private List<String> collectMemberUrls(@Nullable final String memberUrlsString) {
     if (memberUrlsString != null) {
       return ImmutableList.copyOf(Splitter.on(',').omitEmptyStrings().split(memberUrlsString));
     }
