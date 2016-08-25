@@ -104,6 +104,10 @@ JMX client too. Following keys are recognized:
 * `perftest.buildId` -- the ID to use when saving perf metrics
 * `perftest.baselineId` -- the ID to use when loading up baseline perf metrics
 
+**Current limitation**: The `nexus.username` and `nexus.password` are used for both cases, perform perf test (access
+`nexus.baseurl`) but also to perform configuration steps (if defined). Hence, if using configuration steps, make sure
+Nexus user you use **is able to configure nexus**, otherwise failure is inevitable.
+
 ### Adding Scenario Data
 
 CSV and standard NCSA log files ( tar/gzipped ) can be parsed to simulate actual requests.
