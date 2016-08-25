@@ -93,6 +93,17 @@ You can only tell this library:
 Scenarios are defined using xml files in the scenarios directory. Use existing scenarios as an example or review
 the code.
 
+#### Supported properties
+
+Properties may be enlisted in "data pack" `perf.properties` file, but may be overridden by CLI `-D...` or via
+JMX client too. Following keys are recognized:
+* `nexus.baseurl` -- this is the URL that will be used to execute performance test
+* `nexus.username` -- username to be used to access `nexus.baseurl`
+* `nexus.password` -- password to be used to access `nexus.baseurl`
+* `nexus.memberurls` -- comma separate list of member URLs in case you are dealing with a cluster. In this case, configuration steps will be replicated on all members
+* `perftest.buildId` -- the ID to use when saving perf metrics
+* `perftest.baselineId` -- the ID to use when loading up baseline perf metrics
+
 ### Adding Scenario Data
 
 CSV and standard NCSA log files ( tar/gzipped ) can be parsed to simulate actual requests.
