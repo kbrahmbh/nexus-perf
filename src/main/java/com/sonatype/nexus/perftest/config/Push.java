@@ -59,8 +59,10 @@ public class Push
   public void perform() throws Exception {
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
       MavenHostedRepository repository = repositories.get(MavenHostedRepository.class, repo);
-
       final ArtifactDeployer deployer = new ArtifactDeployer(client, repository.contentUri());
+
+      log.info("PUSH: {} started", deployer.getBaseUrl());
+
       final String version = "1.0"; // TODO: param? generated?
 
       long bytes = 0;

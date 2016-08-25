@@ -36,6 +36,7 @@ public class Pull
   }
 
   public void prepare() throws Exception {
+    log.info("PULL: {} started", downloadAction.getBaseUrl());
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
       int count = 0;
       long bytes = 0;
