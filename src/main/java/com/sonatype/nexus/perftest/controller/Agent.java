@@ -63,6 +63,10 @@ public class Agent
     }
   }
 
+  public PerformanceTestMBean getControlBean() {
+    return controlBean;
+  }
+
   public List<Swarm> getSwarms() {
     return swarms;
   }

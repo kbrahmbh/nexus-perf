@@ -37,7 +37,7 @@ public class Nexus
   public Nexus(@JsonProperty("baseurl") String baseurl,
                @JsonProperty("username") String username,
                @JsonProperty("password") String password,
-               @JsonProperty(defaultValue = "memberurls", required = false) String memberurls)
+               @JsonProperty(value = "memberurls", required = false) String memberurls)
   {
     this.baseurl = baseurl;
     this.username = username;
