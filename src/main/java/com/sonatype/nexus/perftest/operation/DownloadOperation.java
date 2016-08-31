@@ -38,10 +38,11 @@ public class DownloadOperation
       @JsonProperty("repo") String repo,
       @JsonProperty(value = "context-root", defaultValue = "nexus") String contextRoot,
       @JsonProperty(value = "user-agent") String userAgent,
+      @JsonProperty(value = "path-prefix") String pathPrefix,
       @JsonProperty(value = "paths", required = true) DownloadPaths paths)
   {
     super(nexus);
-    this.baseUrl = repo == null ? getNexusUrl() : getRepoBaseurl(repo);
+    this.baseUrl = repo == null ? nexusBaseurl + pathPrefix : getRepoBaseurl(repo);
     this.prefix = "/" + contextRoot + "/";
     this.userAgent = userAgent;
     this.paths = paths;
