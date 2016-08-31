@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.sonatype.nexus.perftest.Nexus;
+import com.sonatype.nexus.perftest.config.client.DockerGroupRepository;
+import com.sonatype.nexus.perftest.config.client.DockerHostedRepository;
+import com.sonatype.nexus.perftest.config.client.DockerProxyRepository;
 
 import org.sonatype.nexus.client.core.subsystem.repository.GroupRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.HostedRepository;
@@ -39,6 +42,7 @@ public class CreateRepository
     repoTypes = new HashMap<>();
     repoTypes.put("maven", new HashMap<>());
     repoTypes.put("npm", new HashMap<>());
+    repoTypes.put("docker", new HashMap<>());
 
     repoTypes.get("maven").put("hosted", MavenHostedRepository.class);
     repoTypes.get("maven").put("proxy", MavenProxyRepository.class);
@@ -46,6 +50,9 @@ public class CreateRepository
     repoTypes.get("npm").put("hosted", NpmHostedRepository.class);
     repoTypes.get("npm").put("proxy", NpmProxyRepository.class);
     repoTypes.get("npm").put("group", NpmGroupRepository.class);
+    repoTypes.get("docker").put("hosted", DockerHostedRepository.class);
+    repoTypes.get("docker").put("proxy", DockerProxyRepository.class);
+    repoTypes.get("docker").put("group", DockerGroupRepository.class);
   }
 
   class NodeInfo

@@ -57,6 +57,12 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restlet1x-model</artifactId>
+      <version>${nexusClient.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-npm-repository-client</artifactId>
       <version>${nexusClient.version}</version>
     </dependency>

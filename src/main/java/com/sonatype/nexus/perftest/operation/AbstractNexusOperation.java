@@ -12,6 +12,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.sonatype.nexus.perftest.Nexus;
+import com.sonatype.nexus.perftest.config.client.docker.JerseyDockerGroupRepositoryFactory;
+import com.sonatype.nexus.perftest.config.client.docker.JerseyDockerHostedRepositoryFactory;
+import com.sonatype.nexus.perftest.config.client.docker.JerseyDockerProxyRepositoryFactory;
 
 import org.sonatype.nexus.client.core.NexusClient;
 import org.sonatype.nexus.client.core.spi.SubsystemFactory;
@@ -88,6 +91,9 @@ public abstract class AbstractNexusOperation
     repositoryFactories.add(new JerseyNpmHostedRepositoryFactory());
     repositoryFactories.add(new JerseyNpmGroupRepositoryFactory());
     repositoryFactories.add(new JerseyNpmProxyRepositoryFactory());
+    repositoryFactories.add(new JerseyDockerHostedRepositoryFactory());
+    repositoryFactories.add(new JerseyDockerGroupRepositoryFactory());
+    repositoryFactories.add(new JerseyDockerProxyRepositoryFactory());
     return new JerseyRepositoriesFactory(repositoryFactories);
   }
 
