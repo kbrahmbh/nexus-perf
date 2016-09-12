@@ -31,14 +31,14 @@ public class SFOriginalScenario
     );
     BatchDownloadsOperation provision = new BatchDownloadsOperation(nexus, "public", paths);
     final RequestRate provisionRate = new RequestRate(5 * 2000, TimeUnit.DAYS);
-    final ClientSwarm provisioners = new ClientSwarm(new Nexus(), "provision", provision, null, provisionRate, 1000);
+    final ClientSwarm provisioners = new ClientSwarm(new Nexus(), "provision", provision, null, provisionRate, 1000, false);
     final Metric provisionMetric = provisioners.getMetric();
 
     // deploy artifacts to unique repositories
     UniqueRepositoryDeployOperation deploy =
         new UniqueRepositoryDeployOperation(nexus, new File(basedir), new File("pom.xml"), true, false);
     final RequestRate deployRate = new RequestRate(5 * 400, TimeUnit.DAYS);
-    final ClientSwarm deployers = new ClientSwarm(new Nexus(), "deploy", deploy, null, deployRate, 40);
+    final ClientSwarm deployers = new ClientSwarm(new Nexus(), "deploy", deploy, null, deployRate, 40, false);
     final Metric deployMetric = deployers.getMetric();
 
     provisioners.start();

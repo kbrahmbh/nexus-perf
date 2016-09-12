@@ -32,7 +32,7 @@ public class PrimeNexusScenario
 
     final DownloadOperation download = new DownloadOperation(nexus, "public", paths);
     final RequestRate downloadRate = new RequestRate(5, TimeUnit.SECONDS);
-    final ClientSwarm downloaders = new ClientSwarm(new Nexus(), "download", download, null, downloadRate, 20);
+    final ClientSwarm downloaders = new ClientSwarm(new Nexus(), "download", download, null, downloadRate, 20, false);
     final Metric downloadMetric = downloaders.getMetric();
 
     downloaders.start();

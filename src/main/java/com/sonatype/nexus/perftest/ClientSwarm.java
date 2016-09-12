@@ -26,15 +26,26 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.google.common.collect.ImmutableMap;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.AuthState;
+import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +107,22 @@ public class ClientSwarm
     void perform(ClientRequestInfo requestInfo) throws Exception;
   }
 
+  private static final class PreemptiveAuthInterceptor
+      implements HttpRequestInterceptor
+  {
+    public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
+      AuthState authState = (AuthState) context.getAttribute(HttpClientContext.TARGET_AUTH_STATE);
+      if (authState.getAuthScheme() == null) {
+        CredentialsProvider credsProvider = (CredentialsProvider)
+            context.getAttribute(HttpClientContext.CREDS_PROVIDER);
+        HttpHost targetHost = (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
+        AuthScope authScope = new AuthScope(targetHost.getHostName(), targetHost.getPort());
+        Credentials creds = credsProvider.getCredentials(authScope);
+        authState.update(new BasicScheme(), creds);
+      }
+    }
+  }
+
   private class ClientThread
       extends Thread
       implements ClientRequestInfo
@@ -122,6 +149,7 @@ public class ClientSwarm
                         String swarmName,
                         int clientId,
                         Operation operation,
+                        boolean preemptiveAuth,
                         Metric metric,
                         RequestRate rate,
                         Meter downloadedBytesMeter,
@@ -137,16 +165,19 @@ public class ClientSwarm
       this.context.put("metric.uploadedBytesMeter", uploadedBytesMeter);
 
       CredentialsProvider credsProvider = new BasicCredentialsProvider();
-      credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(nexus.getUsername(), nexus.getPassword()));
-      BasicHttpClientConnectionManager clientConnectionManager = new BasicHttpClientConnectionManager();
-      this.httpClient = HttpClients.custom()
-          .setConnectionManager(clientConnectionManager)
+      credsProvider
+          .setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(nexus.getUsername(), nexus.getPassword()));
+      HttpClientBuilder httpClientBuilder = HttpClients.custom()
+          .setConnectionManager(new BasicHttpClientConnectionManager())
           .setDefaultRequestConfig(
               RequestConfig.custom()
                   .setConnectTimeout(HTTP_TIMEOUT)
-                  .setSocketTimeout(HTTP_TIMEOUT).build()
-          )
-          .setDefaultCredentialsProvider(credsProvider).build();
+                  .setSocketTimeout(HTTP_TIMEOUT).build())
+          .setDefaultCredentialsProvider(credsProvider);
+      if (preemptiveAuth) {
+        httpClientBuilder.addInterceptorFirst(new PreemptiveAuthInterceptor());
+      }
+      this.httpClient = httpClientBuilder.build();
     }
 
     @Override
@@ -255,7 +286,8 @@ public class ClientSwarm
                      @JsonProperty("operation") Operation operation, //
                      @JsonProperty(value = "initialDelay", required = false) Duration initialDelay, //
                      @JsonProperty("rate") RequestRate rate, //
-                     @JsonProperty("numberOfClients") int clientCount)
+                     @JsonProperty("numberOfClients") int clientCount,
+                     @JsonProperty("preemptiveAuth") boolean preemptiveAuth)
   {
     this.requestsMeter = new Meter();
     this.requestDurationTimer = new Timer();
@@ -287,8 +319,17 @@ public class ClientSwarm
     metric = new Metric(name);
     List<ClientThread> threads = new ArrayList<>();
     for (int i = 0; i < clientCount; i++) {
-      ClientThread clientThread = new ClientThread(nexus, name, i, operation, metric, rate, downloadedBytesMeter,
-          uploadedBytesMeter);
+      ClientThread clientThread = new ClientThread(
+          nexus,
+          name,
+          i,
+          operation,
+          preemptiveAuth,
+          metric,
+          rate,
+          downloadedBytesMeter,
+          uploadedBytesMeter
+      );
       clientThread.setName(swarmName + i);
       threads.add(clientThread);
     }
